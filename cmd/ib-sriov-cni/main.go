@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -12,7 +13,7 @@ import (
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
-	"github.com/containernetworking/cni/pkg/version"
+	cniVersion "github.com/containernetworking/cni/pkg/version"
 	"github.com/containernetworking/plugins/pkg/ipam"
 	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/gofrs/flock"
@@ -30,6 +31,12 @@ const (
 	ipamDHCP             = "dhcp"
 )
 
+var (
+	version = "master@git"
+	commit  = "unknown commit"
+	date    = "unknown date"
+)
+
 //nolint:gochecknoinits
 func init() {
 	// this ensures that main runs only on main thread (thread group leader).
@@ -38,18 +45,18 @@ func init() {
 	runtime.LockOSThread()
 }
 
-func getGUIDFromConf(netConf *localtypes.NetConf) (string, error) {
+func getGUIDFromConf(netConf *localtypes.NetConf) string {
 	// Take from runtime config if available
 	if netConf.RuntimeConfig.InfinibandGUID != "" {
-		return netConf.RuntimeConfig.InfinibandGUID, nil
+		return netConf.RuntimeConfig.InfinibandGUID
 	}
 	// Take from CNI_ARGS if available
 	if guid, ok := netConf.Args.CNI["guid"]; ok {
-		return guid, nil
+		return guid
 	}
 
-	return "", fmt.Errorf(
-		"infiniBand SRIOV-CNI failed, no guid found from runtimeConfig/CNI_ARGS, please check mellanox ib-kubernets")
+	// No guid provided
+	return ""
 }
 
 func lockCNIExecution() (*flock.Flock, error) {
@@ -100,9 +107,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 			infiniBandAnnotation, configuredInfiniBand)
 	}
 
-	if netConf.GUID, err = getGUIDFromConf(netConf); err != nil {
-		return err
-	}
+	netConf.GUID = getGUIDFromConf(netConf)
 
 	if netConf.RdmaIso {
 		err = utils.EnsureRdmaSystemMode()
@@ -317,6 +322,23 @@ func cmdCheck(args *skel.CmdArgs) error {
 	return nil
 }
 
+func printVersionString() string {
+	return fmt.Sprintf("ib-sriov cni version:%s, commit:%s, date:%s", version, commit, date)
+}
+
 func main() {
-	skel.PluginMain(cmdAdd, cmdCheck, cmdDel, version.All, "")
+	// Init command line flags to clear vendor packages' flags, especially in init()
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
+	// add version flag
+	versionOpt := false
+	flag.BoolVar(&versionOpt, "version", false, "Show application version")
+	flag.BoolVar(&versionOpt, "v", false, "Show application version")
+	flag.Parse()
+	if versionOpt {
+		fmt.Printf("%s\n", printVersionString())
+		return
+	}
+
+	skel.PluginMain(cmdAdd, cmdCheck, cmdDel, cniVersion.All, "")
 }
