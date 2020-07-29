@@ -118,7 +118,11 @@ func (t Tag) Parent() Tag {
 	return Tag{language: lang, locale: lang}
 }
 
+<<<<<<< HEAD
 // nextToken returns token t and the rest of the string.
+=======
+// returns token t and the rest of the string.
+>>>>>>> d700556 (Revendor golang.org/x/text)
 func nextToken(s string) (t, tail string) {
 	p := strings.Index(s[1:], "-")
 	if p == -1 {
