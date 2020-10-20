@@ -10,3 +10,5 @@ approvers:
   - dougbtv
   - fepan
   - s1061123
+component: "Networking"
+subcomponent: "SR-IOV"
