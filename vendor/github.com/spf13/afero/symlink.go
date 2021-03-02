@@ -21,9 +21,15 @@ import (
 // filesystems saying so.
 // It indicates support for 3 symlink related interfaces that implement the
 // behaviors of the os methods:
+<<<<<<< HEAD
 //   - Lstat
 //   - Symlink, and
 //   - Readlink
+=======
+//    - Lstat
+//    - Symlink, and
+//    - Readlink
+>>>>>>> 2e9ceb2 (fix vendor modules.txt to go.mod)
 type Symlinker interface {
 	Lstater
 	Linker

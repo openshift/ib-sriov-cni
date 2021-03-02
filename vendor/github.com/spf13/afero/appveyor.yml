@@ -7,4 +7,3 @@ environment:
 build_script:
 - cmd: >-
     go version
-
