@@ -102,15 +102,55 @@ var _ = Describe("Sriov", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(netconf.HostIFGUID).To(Equal(hostGUID))
 		})
-		It("ApplyVFConfig without GUID", func() {
+		It("ApplyVFConfig without GUID, VF's GUID all zeroes", func() {
 			mockedNetLinkManger := &mocks.NetlinkManager{}
 			mockedPciUtils := &mocks.PciUtils{}
 
-			fakeLink := &FakeLink{}
+			hostGUID := "00:00:00:00:00:00:00:00"
+			gid, err := net.ParseMAC("00:00:04:a5:fe:80:00:00:00:00:00:00:" + hostGUID)
+			Expect(err).ToNot(HaveOccurred())
+
+			fakeLink := &FakeLink{netlink.LinkAttrs{
+				HardwareAddr: gid,
+			}}
 			mockedNetLinkManger.On("LinkByName", mock.AnythingOfType("string")).Return(fakeLink, nil)
 
 			sm := sriovManager{nLink: mockedNetLinkManger, utils: mockedPciUtils}
-			err := sm.ApplyVFConfig(netconf)
+			err = sm.ApplyVFConfig(netconf)
+			Expect(err).To(HaveOccurred())
+		})
+		It("ApplyVFConfig without GUID, VF's GUID all 'F's", func() {
+			mockedNetLinkManger := &mocks.NetlinkManager{}
+			mockedPciUtils := &mocks.PciUtils{}
+
+			hostGUID := "ff:ff:ff:ff:ff:ff:ff:ff"
+			gid, err := net.ParseMAC("00:00:04:a5:fe:80:00:00:00:00:00:00:" + hostGUID)
+			Expect(err).ToNot(HaveOccurred())
+
+			fakeLink := &FakeLink{netlink.LinkAttrs{
+				HardwareAddr: gid,
+			}}
+			mockedNetLinkManger.On("LinkByName", mock.AnythingOfType("string")).Return(fakeLink, nil)
+
+			sm := sriovManager{nLink: mockedNetLinkManger, utils: mockedPciUtils}
+			err = sm.ApplyVFConfig(netconf)
+			Expect(err).To(HaveOccurred())
+		})
+		It("ApplyVFConfig without GUID, VF's GUID is configured", func() {
+			mockedNetLinkManger := &mocks.NetlinkManager{}
+			mockedPciUtils := &mocks.PciUtils{}
+
+			hostGUID := "11:22:33:00:00:aa:bb:cc"
+			gid, err := net.ParseMAC("00:00:04:a5:fe:80:00:00:00:00:00:00:" + hostGUID)
+			Expect(err).ToNot(HaveOccurred())
+
+			fakeLink := &FakeLink{netlink.LinkAttrs{
+				HardwareAddr: gid,
+			}}
+			mockedNetLinkManger.On("LinkByName", mock.AnythingOfType("string")).Return(fakeLink, nil)
+
+			sm := sriovManager{nLink: mockedNetLinkManger, utils: mockedPciUtils}
+			err = sm.ApplyVFConfig(netconf)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(netconf.HostIFGUID).To(Equal(""))
 			Expect(netconf.GUID).To(Equal(""))
@@ -463,6 +503,7 @@ var _ = Describe("Sriov", func() {
 			fakeLink := &FakeLink{netlink.LinkAttrs{}}
 			netconf.HostIFGUID = "01:23:45:67:89:ab:cd:ef"
 
+			mockedNetLinkManger.On("LinkSetName", fakeLink, netconf.HostIFNames).Return(nil)
 			mockedNetLinkManger.On("LinkByName", mock.AnythingOfType("string")).Return(fakeLink, nil)
 			mockedNetLinkManger.On("LinkSetVfNodeGUID", fakeLink, mock.AnythingOfType("int"), mock.Anything).Return(nil)
 			mockedNetLinkManger.On("LinkSetVfPortGUID", fakeLink, mock.AnythingOfType("int"), mock.Anything).Return(nil)
@@ -491,6 +532,7 @@ var _ = Describe("Sriov", func() {
 			fakeLink := &FakeLink{netlink.LinkAttrs{}}
 			netconf.HostIFGUID = "00:00:00:00:00:00:00:00"
 
+			mockedNetLinkManger.On("LinkSetName", fakeLink, netconf.HostIFNames).Return(nil)
 			mockedNetLinkManger.On("LinkByName", mock.AnythingOfType("string")).Return(fakeLink, nil)
 			mockedNetLinkManger.On("LinkSetVfNodeGUID", fakeLink, mock.AnythingOfType("int"), mock.Anything).Return(nil)
 			mockedNetLinkManger.On("LinkSetVfPortGUID", fakeLink, mock.AnythingOfType("int"), mock.Anything).Return(nil)

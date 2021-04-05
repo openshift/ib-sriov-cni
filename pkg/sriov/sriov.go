@@ -247,8 +247,45 @@ func (s *sriovManager) ApplyVFConfig(conf *types.NetConf) error {
 		if err := s.setVfGUID(conf, pfLink, conf.GUID); err != nil {
 			return err
 		}
+	} else {
+		// Verify VF have valid GUID.
+		vfLink, err := s.nLink.LinkByName(conf.HostIFNames)
+		if err != nil {
+			return fmt.Errorf("failed to lookup vf %q: %v", conf.HostIFNames, err)
+		}
+
+		guid := utils.GetGUIDFromHwAddr(vfLink.Attrs().HardwareAddr)
+		if guid == "" || utils.IsAllZeroGUID(guid) || utils.IsAllOnesGUID(guid) {
+			return fmt.Errorf("VF %s GUID is not valid", conf.HostIFNames)
+		}
 	}
 
+	return nil
+}
+
+// restoreVFName restores VF name from conf
+func (s *sriovManager) restoreVFName(conf *types.NetConf) error {
+	linkName, err := utils.GetVFLinkNames(conf.DeviceID)
+	if err != nil {
+		return fmt.Errorf("restoreVFName error: failed to get netdev name for VF %s, %v", conf.DeviceID, err)
+	}
+
+	if linkName == conf.HostIFNames {
+		// VF has expected name, no need to set it
+		return nil
+	}
+
+	var linkObj netlink.Link
+	linkObj, err = s.nLink.LinkByName(linkName)
+	if err != nil {
+		return fmt.Errorf("restoreVFName error: failed to get link for %s, %v", linkName, err)
+	}
+
+	err = s.nLink.LinkSetName(linkObj, conf.HostIFNames)
+	if err != nil {
+		return fmt.Errorf("restoreVFName error: failed to rename link %s to host name %s, %v",
+			linkName, conf.HostIFNames, err)
+	}
 	return nil
 }
 
@@ -277,7 +314,12 @@ func (s *sriovManager) ResetVFConfig(conf *types.NetConf) error {
 			conf.HostIFGUID = "FF:FF:FF:FF:FF:FF:FF:FF"
 		}
 
-		return s.setVfGUID(conf, pfLink, conf.HostIFGUID)
+		if err := s.setVfGUID(conf, pfLink, conf.HostIFGUID); err != nil {
+			return err
+		}
+		// setVfGUID cause VF to rebind, which change its name. Lets restore it.
+		// Once setVfGUID wouldn't do rebind to apply GUID this function should be removed
+		return s.restoreVFName(conf)
 	}
 
 	return nil

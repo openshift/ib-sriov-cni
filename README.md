@@ -1,7 +1,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Mellanox/ib-sriov-cni)](https://goreportcard.com/report/github.com/Mellanox/ib-sriov-cni)
-[![Build Status](https://travis-ci.com/Mellanox/ib-sriov-cni.svg?branch=master)](https://travis-ci.com/Mellanox/ib-sriov-cni)
-[![Coverage Status](https://coveralls.io/repos/github/Mellanox/ib-sriov-cni/badge.svg)](https://coveralls.io/github/Mellanox/ib-sriov-cni)
+[![Go Report Card](https://goreportcard.com/badge/github.com/k8snetworkplumbingwg/ib-sriov-cni)](https://goreportcard.com/report/github.com/k8snetworkplumbingwg/ib-sriov-cni)
+[![Build Status](https://api.travis-ci.org/k8snetworkplumbingwg/ib-sriov-cni.svg?branch=master)](https://api.travis-ci.org/k8snetworkplumbingwg/ib-sriov-cni.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/k8snetworkplumbingwg/ib-sriov-cni/badge.svg)](https://coveralls.io/github/k8snetworkplumbingwg/ib-sriov-cni)
 
    * [InfiniBand SR-IOV CNI plugin](#infiniband-sr-iov-cni-plugin)
       * [Build](#build)
@@ -10,7 +10,8 @@
          * [Using Mellanox OFED](#using-mellanox-ofed)
       * [Configuration reference](#configuration-reference)
       * [Usage](#usage)
-      * [Limitations](limitations)
+      * [SR-IOV Network Operator](#sr-iov-network-operator)
+      * [System Requirements and Topology](#system-requirements-and-topology)
 
 # InfiniBand SR-IOV CNI plugin
 NIC with [SR-IOV](http://blog.scottlowe.org/2009/12/02/what-is-sr-iov/) capabilities work by introducing the idea of physical functions (PFs) and virtual functions (VFs). 
@@ -241,3 +242,17 @@ ib-sriov supports the following [CNI's Capabilities / Runtime Configuration](htt
 
 EOF
 ```
+# SR-IOV Network Operator
+[SR-IOV Network Operator](https://github.com/openshift/sriov-network-operator) is used to manage the SR-IOV interfaces on the nodes e.g. change the number of VFs on the node, it is also used to change the link type for the interfaces ETH to IB and vice versa, the [network policy example](https://github.com/openshift/sriov-network-operator/blob/master/deploy/crds/sriovnetwork.openshift.io_v1_sriovnetworknodepolicy_cr.yaml#L38) shows how to use the operator to change the link type and SR-IOV attributes for a given PCI physical function address.
+
+# System Requirements and Topology
+InfiniBand SR-IOV CNI works with kernel 5.6 which supports RDMA network namespace isolation and get/set of a VF's port and node GUID.
+
+The recommended network topology for a Kubernetes deployment with Infiniband as a secondary network is as follows:
+* Two physical networks, one Ethernet network used as Kubernetes management and Pod primary network (these can be separate) and another Infiniband network interconnecting Kubernetes worker nodes.
+* Worker nodes where ib-sriov CNI is invoked are expected to have connectivity through the infiniband fabric with the subnet manager (SM), either running on a managed Infiniband switch or another node (i.e there needs to be an active SM in the fabric).
+
+![picture alt](docs/topology.png "Topology")
+
+## Notes:
+* OpenSM with SR-IOV support should be download form [Mellanox OFED](https://www.mellanox.com/products/infiniband-drivers/linux/mlnx_ofed).

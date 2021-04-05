@@ -24,7 +24,7 @@ linters-settings:
   gocognit:
     min-complexity: 30
   goimports:
-    local-prefixes: github.com/Mellanox/ib-sriov-cni
+    local-prefixes: github.com/Mellanox/sriovnet
   golint:
     min-confidence: 0
   gomnd:
@@ -67,7 +67,7 @@ linters:
     - gocognit
     - gofmt
     - goimports
-    - golint
+    - golint 
     - gomnd
     - goprintffuncname
     - gosec
