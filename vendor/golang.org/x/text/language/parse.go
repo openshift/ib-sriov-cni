@@ -6,10 +6,7 @@ package language
 
 import (
 	"errors"
-<<<<<<< HEAD
 	"sort"
-=======
->>>>>>> d700556 (Revendor golang.org/x/text)
 	"strconv"
 	"strings"
 
