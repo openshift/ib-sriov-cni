@@ -12,7 +12,7 @@ import (
 
 	"github.com/containernetworking/cni/pkg/skel"
 	"github.com/containernetworking/cni/pkg/types"
-	"github.com/containernetworking/cni/pkg/types/current"
+	current "github.com/containernetworking/cni/pkg/types/100"
 	cniVersion "github.com/containernetworking/cni/pkg/version"
 	"github.com/containernetworking/plugins/pkg/ipam"
 	"github.com/containernetworking/plugins/pkg/ns"
@@ -65,7 +65,7 @@ func lockCNIExecution() (*flock.Flock, error) {
 	// As the mapping of RDMA resources is done in Device plugin prior to CNI invocation, it must not change here.
 	// We serialize the CNI's operation causing kernel to allocate the VF's RDMA resources under the same name.
 	// In the future, Systems should use udev PCI based RDMA device names, ensuring consistent RDMA resources names.
-	err := os.MkdirAll(config.CniFileLockDir, 0700)
+	err := os.MkdirAll(config.CniFileLockDir, utils.OwnerReadWriteExecuteAttrs)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ib-sriov-cni lock file directory(%q): %v", config.CniFileLockDir, err)
 	}
@@ -287,7 +287,7 @@ func cmdAdd(args *skel.CmdArgs) error {
 		return fmt.Errorf("error saving NetConf %q", err)
 	}
 
-	return types.PrintResult(result, current.ImplementedSpecVersion)
+	return types.PrintResult(result, netConf.CNIVersion)
 }
 
 func cmdDel(args *skel.CmdArgs) error {
@@ -298,7 +298,11 @@ func cmdDel(args *skel.CmdArgs) error {
 
 	netConf, cRefPath, err := config.LoadConfFromCache(args)
 	if err != nil {
-		return err
+		// According to the CNI spec, a DEL action should complete without errors
+		// even if there are some resources missing. For more details, see
+		//nolint
+		// https://github.com/containernetworking/cni/blob/main/SPEC.md#del-remove-container-from-network-or-un-apply-modifications
+		return nil
 	}
 
 	defer func() {
@@ -391,5 +395,6 @@ func main() {
 		return
 	}
 
-	skel.PluginMain(cmdAdd, cmdCheck, cmdDel, cniVersion.All, "")
+	skel.PluginMain(cmdAdd, cmdCheck, cmdDel,
+		cniVersion.PluginSupports("0.1.0", "0.2.0", "0.3.0", "0.3.1", "0.4.0"), "")
 }
