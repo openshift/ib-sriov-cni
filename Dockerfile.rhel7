@@ -6,7 +6,7 @@ WORKDIR /usr/src/ib-sriov-cni
 RUN make clean && \
     make build
 
-FROM registry.ci.openshift.org/ocp/4.15:base
+FROM registry.ci.openshift.org/ocp/4.15:base-rhel9
 COPY --from=builder /usr/src/ib-sriov-cni/build/ib-sriov /usr/bin/
 WORKDIR /
 
