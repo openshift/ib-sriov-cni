@@ -5,6 +5,7 @@ reviewers:
   - fepan
   - s1061123
   - wizhaoredhat
+  - bn222
 approvers:
   - zshi-redhat
   - pliurh
@@ -12,5 +13,6 @@ approvers:
   - fepan
   - s1061123
   - wizhaoredhat
+  - bn222
 component: "Networking"
 subcomponent: "SR-IOV"
