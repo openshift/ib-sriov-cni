@@ -76,7 +76,10 @@ linters:
     - nakedret
     - prealloc
     - revive
+<<<<<<< HEAD
     - rowserrcheck
+=======
+>>>>>>> origin/master
     - staticcheck
     - stylecheck
     - typecheck
