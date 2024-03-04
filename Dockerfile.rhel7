@@ -1,4 +1,14 @@
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.21-openshift-4.16 AS builder-rhel8
+
+COPY . /usr/src/ib-sriov-cni
+
+WORKDIR /usr/src/ib-sriov-cni
+RUN make clean && \
+    make build
+
+
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.21-openshift-4.16 AS builder-rhel9
+
 
 COPY . /usr/src/ib-sriov-cni
 
@@ -7,7 +17,14 @@ RUN make clean && \
     make build
 
 FROM registry.ci.openshift.org/ocp/4.16:base-rhel9
-COPY --from=builder /usr/src/ib-sriov-cni/build/ib-sriov /usr/bin/
+
+COPY --from=builder-rhel9 /usr/src/ib-sriov-cni/build/ib-sriov /usr/bin/
+
+RUN mkdir /usr/bin/rhel9
+COPY --from=builder-rhel9 /usr/src/ib-sriov-cni/build/ib-sriov /usr/bin/rhel9
+RUN mkdir /usr/bin/rhel8
+COPY --from=builder-rhel8 /usr/src/ib-sriov-cni/build/ib-sriov /usr/bin/rhel8
+
 WORKDIR /
 
 LABEL io.k8s.display-name="InfiniBand SR-IOV CNI"
