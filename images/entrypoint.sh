@@ -3,27 +3,75 @@
 # Always exit on errors.
 set -e
 
-# Set known directories.
-CNI_BIN_DIR="/host/opt/cni/bin"
-IB_SRIOV_CNI_BIN_FILE="/usr/bin/ib-sriov"
-
 # Give help text for parameters.
 usage()
 {
-    /bin/echo -e "This is an entrypoint script for InfiniBand SR-IOV CNI to overlay its"
-    /bin/echo -e "binary into location in a filesystem. The binary file will"
-    /bin/echo -e "be copied to the corresponding directory."
-    /bin/echo -e ""
-    /bin/echo -e "./entrypoint.sh"
-    /bin/echo -e "\t-h --help"
-    /bin/echo -e "\t--cni-bin-dir=$CNI_BIN_DIR"
-    /bin/echo -e "\t--ib-sriov-cni-bin-file=$IB_SRIOV_CNI_BIN_FILE"
+    printf "This is an entrypoint script for InfiniBand SR-IOV CNI to overlay its\n"
+    printf "binary into location in a filesystem. The binary file will\n"
+    printf "be copied to the corresponding directory.\n"
+    printf "\n"
+    printf "./entrypoint.sh\n"
+    printf "\t-h --help\n"
+    printf "\t--cni-bin-dir=%s\n" "$CNI_BIN_DIR"
+    printf "\t--ib-sriov-cni-bin-file=%s\n" "$IB_SRIOV_CNI_BIN_FILE"
+    printf "\t--no-sleep\n"
 }
+
+get_source_folder_for_rhel_version()
+{
+    if [ ! -f /host/etc/os-release ]; then
+        echo "/usr/bin"
+        return
+    fi
+
+    # shellcheck source=/dev/null
+    . /host/etc/os-release
+    
+    rhelmajor=
+    # detect which version we're using in order to copy the proper binaries
+    case "${ID}" in
+        rhcos|scos)
+            rhelmajor=$(echo "$RHEL_VERSION" | sed -E 's/([0-9]+)\.{1}[0-9]+(\.[0-9]+)?/\1/')
+        ;;
+        rhel) rhelmajor=$(echo "${VERSION_ID}" | cut -f 1 -d .)
+        ;;
+        fedora)
+            if [ "${VARIANT_ID}" = "coreos" ]; then
+            rhelmajor=8
+            else
+            log "FATAL ERROR: Unsupported Fedora variant=${VARIANT_ID}"
+            exit 1
+            fi
+        ;;
+        *) log "FATAL ERROR: Unsupported OS ID=${ID}"; exit 1
+        ;;
+        esac
+        # Set which directory we'll copy from, detect if it exists
+        sourcedir=/usr/bin
+        case "${rhelmajor}" in
+        8)
+        sourcedir=/usr/bin/rhel8
+        ;;
+        9)
+        sourcedir=/usr/bin/rhel9
+        ;;
+        *)
+        log "ERROR: RHEL Major Version Unsupported, rhelmajor=${rhelmajor}"
+        ;;
+    esac
+
+    echo "${sourcedir}"
+}
+
+# Set known directories.
+CNI_BIN_DIR="/host/opt/cni/bin"
+IB_SRIOV_CNI_BIN_FILE="$(get_source_folder_for_rhel_version)/ib-sriov"
+NO_SLEEP=0
 
 # Parse parameters given as arguments to this script.
 while [ "$1" != "" ]; do
-    PARAM=`echo $1 | awk -F= '{print $1}'`
-    VALUE=`echo $1 | awk -F= '{print $2}'`
+    PARAM=$(echo "$1" | awk -F= '{print $1}')
+    VALUE=$(echo "$1" | awk -F= '{print $2}')
     case $PARAM in
         -h | --help)
             usage
@@ -34,6 +82,9 @@ while [ "$1" != "" ]; do
             ;;
         --ib-sriov-cni-bin-file)
             IB_SRIOV_CNI_BIN_FILE=$VALUE
+            ;;
+        --no-sleep)
+            NO_SLEEP=1
             ;;
         *)
             /bin/echo "ERROR: unknown parameter \"$PARAM\""
@@ -55,10 +106,15 @@ do
 done
 
 # Copy file into proper place.
-cp -f $IB_SRIOV_CNI_BIN_FILE $CNI_BIN_DIR
+cp -f "$IB_SRIOV_CNI_BIN_FILE" "$CNI_BIN_DIR"
+
+if [ $NO_SLEEP -eq 1 ]; then
+  exit 0
+fi
 
 echo "Entering sleep... (success)"
+trap : TERM INT
 
 # Sleep forever. 
 # sleep infinity is not available in alpine; instead lets go sleep for ~68 years. Hopefully that's enough sleep
-sleep 2147483647
+sleep 2147483647 & wait
