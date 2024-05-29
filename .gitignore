@@ -1,6 +1,6 @@
 # Files
 .gopath
-.cover
+*.cover
 
 # Folders
 build/
