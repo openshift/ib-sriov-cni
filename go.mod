@@ -1,6 +1,6 @@
 module github.com/Mellanox/ib-sriov-cni
 
-go 1.21
+go 1.22
 
 require (
 	github.com/Mellanox/rdma-cni v1.0.1
