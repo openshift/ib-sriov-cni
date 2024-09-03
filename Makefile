@@ -47,6 +47,12 @@ GOLANGCI_LINT = $(GOBIN)/golangci-lint
 GOLANGCI_LINT_VER = v1.51.2
 TIMEOUT = 15
 Q = $(if $(filter 1,$V),,@)
+# Go settings
+GO_BUILD_OPTS ?=CGO_ENABLED=0
+GO_LDFLAGS ?=
+GO_FLAGS ?=
+GO_TAGS ?=-tags no_openssl
+export GOPATH?=$(shell go env GOPATH)
 
 .PHONY: all
 all: lint build test-coverage
@@ -65,7 +71,7 @@ build: $(BUILDDIR)/$(BINARY_NAME) ; $(info Building $(BINARY_NAME)...) ## Build 
 	$(info Done!)
 
 $(BUILDDIR)/$(BINARY_NAME): $(GOFILES) | $(BUILDDIR)
-	@cd $(BASE)/cmd/$(PACKAGE) && CGO_ENABLED=0 $(GO) build -o $(BUILDDIR)/$(BINARY_NAME) -tags no_openssl -ldflags $(LDFLAGS) -v
+	@cd $(BASE)/cmd/$(PACKAGE) && $(GO_BUILD_OPTS) $(GO) build -o $(BUILDDIR)/$(BINARY_NAME) $(GO_TAGS) -ldflags $(LDFLAGS) -v
 
 # Tools
 $(GOLANGCI_LINT): ; $(info  installing golangci-lint...)
