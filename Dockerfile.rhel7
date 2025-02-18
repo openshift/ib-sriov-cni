@@ -16,7 +16,7 @@ WORKDIR /usr/src/ib-sriov-cni
 RUN make clean && \
    GO_TAGS="" GO_BUILD_OPTS=CGO_ENABLED=1 make build
 
-FROM registry.ci.openshift.org/ocp/4.14:base
+FROM registry.ci.openshift.org/ocp/4.14:base-rhel9
 
 COPY --from=builder-rhel9 /usr/src/ib-sriov-cni/build/ib-sriov /usr/bin/
 
