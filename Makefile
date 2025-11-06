@@ -65,7 +65,6 @@ GOLANGCI_LINT = $(BINDIR)/golangci-lint
 GOLANGCI_LINT_VER = v1.51.2
 TIMEOUT = 15
 export GOLANGCI_LINT_CACHE = $(BUILDDIR)/.cache
-
 $(GOLANGCI_LINT): | $(BINDIR) ; $(info  installing golangci-lint...)
 	$(call go-install-tool,$(GOLANGCI_LINT),github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VER))
 
