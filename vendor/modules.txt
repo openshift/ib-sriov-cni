@@ -54,8 +54,8 @@ github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
-# github.com/k8snetworkplumbingwg/rdma-cni v1.4.0
-## explicit; go 1.24.0
+# github.com/k8snetworkplumbingwg/rdma-cni v1.5.0
+## explicit; go 1.24.2
 github.com/k8snetworkplumbingwg/rdma-cni/pkg/rdma
 github.com/k8snetworkplumbingwg/rdma-cni/pkg/types
 # github.com/k8snetworkplumbingwg/sriovnet v1.2.0
