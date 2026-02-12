@@ -23,6 +23,8 @@ const (
 	IPoIBAddrLengthBytes       = 20
 	OwnerReadWriteExecuteAttrs = 0700
 	OwnerReadWriteAttrs        = 0600
+	VfioPciDriverName          = "vfio-pci"
+	DefaultGUID                = "FF:FF:FF:FF:FF:FF:FF:FF"
 )
 
 // GetSriovNumVfs takes in a PF name(ifName) as string and returns number of VF configured as int
@@ -34,7 +36,7 @@ func GetSriovNumVfs(ifName string) (int, error) {
 		return vfTotal, fmt.Errorf("failed to open the sriov_numfs of device %q: %v", ifName, err)
 	}
 
-	data, err := os.ReadFile(sriovFile)
+	data, err := os.ReadFile(sriovFile) /* #nosec G304 */
 	if err != nil {
 		return vfTotal, fmt.Errorf("failed to read the sriov_numfs of device %q: %v", ifName, err)
 	}
@@ -200,7 +202,7 @@ func saveScratchNetConf(containerID, dataDir string, netconf []byte) error {
 
 // ReadScratchNetConf takes in container ID, Pod interface name and data dir as string and returns a pointer to Conf
 func ReadScratchNetConf(cRefPath string) ([]byte, error) {
-	data, err := os.ReadFile(cRefPath)
+	data, err := os.ReadFile(cRefPath) /* #nosec G304 */
 	if err != nil {
 		return nil, fmt.Errorf("failed to read container data in the path(%q): %v", cRefPath, err)
 	}
@@ -243,4 +245,20 @@ func IsAllZeroGUID(guid string) bool {
 // IsAllOnesGUID check if the guid is all ones
 func IsAllOnesGUID(guid string) bool {
 	return guid == "ff:ff:ff:ff:ff:ff:ff:ff" || guid == "FF:FF:FF:FF:FF:FF:FF:FF"
+}
+
+// IsVfioPciDevice checks if a PCI device is bound to vfio-pci driver
+func IsVfioPciDevice(pciAddr string) (bool, error) {
+	driverPath := filepath.Join(SysBusPci, pciAddr, "driver")
+
+	// Check if driver symlink exists
+	linkTarget, err := os.Readlink(driverPath)
+	if err != nil {
+		// If readlink fails, the device might not be bound to any driver
+		return false, nil
+	}
+
+	// Check if the driver is vfio-pci
+	driverName := filepath.Base(linkTarget)
+	return driverName == VfioPciDriverName, nil
 }
