@@ -3,6 +3,6 @@
 *.cover
 
 # Folders
-build/
+/build/
 bin/
 vendor/
