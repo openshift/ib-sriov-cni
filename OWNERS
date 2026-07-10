@@ -7,6 +7,9 @@ reviewers:
   - wizhaoredhat
   - bn222
   - SchSeba
+  - SamD2021
+  - pablmart
+  - zhiqiangf
 approvers:
   - zshi-redhat
   - pliurh
@@ -16,5 +19,8 @@ approvers:
   - wizhaoredhat
   - bn222
   - SchSeba
+  - SamD2021
+  - pablmart
+  - zhiqiangf
 component: "Networking"
 subcomponent: "SR-IOV"
