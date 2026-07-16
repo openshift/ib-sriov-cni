@@ -1,20 +1,22 @@
 reviewers:
-  - zshi-redhat
-  - pliurh
   - dougbtv
   - fepan
   - s1061123
   - wizhaoredhat
   - bn222
   - SchSeba
+  - SamD2021
+  - pablmart
+  - zhiqiangf
 approvers:
-  - zshi-redhat
-  - pliurh
   - dougbtv
   - fepan
   - s1061123
   - wizhaoredhat
   - bn222
   - SchSeba
+  - SamD2021
+  - pablmart
+  - zhiqiangf
 component: "Networking"
 subcomponent: "SR-IOV"
