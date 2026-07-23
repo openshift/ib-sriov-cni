@@ -15,13 +15,13 @@ jobs:
     name: build and push multi-arch image (Release)
     steps:
       - name: check out the repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: login to Docker
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -29,7 +29,7 @@ jobs:
 
       - name: docker meta
         id: docker_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE_NAME }}
           flavor: |
@@ -38,7 +38,7 @@ jobs:
             type=ref,event=tag
 
       - name: build and push ib-sriov-cni (multi-arch)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           push: true
